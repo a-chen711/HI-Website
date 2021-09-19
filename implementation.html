@@ -1,0 +1,191 @@
+<!doctype html>
+<html>
+<head>
+  <meta name = "robots" content = "noindex">
+  <title>HI Implementation</title>
+  <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1">
+  <link href="css/frame.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href="css/controls.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href="css/custom.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,700' rel='stylesheet' type='text/css'>
+  <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="js/menu.js"></script>
+  <script src="js/collapse.js"></script>
+  <style>
+    .menu-highlight {
+      color: rgb(255, 255, 255) !important;
+      opacity: 1 !important;
+      font-weight: 700 !important;
+    }
+    .menu-embedding {
+      color: rgb(255, 255, 255) !important;
+      opacity: 1 !important;
+      font-weight: 700 !important;
+    }
+    .collapsible {
+  background-color: #777;
+  color: white;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
+
+.active, .collapsible:hover {
+  background-color: #555;
+}
+
+.collapse-content {
+  padding: 0 18px;
+  display: none;
+  overflow: hidden;
+  background-color: #f1f1f1;
+}
+</style>
+</head>
+
+<body>
+  <div class="menu-container">
+    <div class="menu">
+      <div class="menu-table flex-row-space-between">
+        <div class="logo flex-row-center">
+          <a href="index.html">Hand Interfaces</a>
+        </div>
+        <a class="menu-button" tabindex="0" href="javascript:void(0)">
+          <img src="img/menu.png">
+        </a>
+        <div class="menu-items flex-row-center flex-item">
+          <a href="index.html" >Overview</a>
+          <a href="implementation.html" class="menu-highlight">Implementation</a> <!--Our Github-->
+          <a href="applications.html">Applications</a> <!--Video Demo-->
+          <a href="qna.html">FAQ</a> <!--Q&A-->
+          <a href="mailto: handinterfaces@gmail.com">Contact us</a> <!--email us-->
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="content-container">
+    <div class="content">
+      <div class="content-table flex-column">
+        <!-------------------------------------------------------------------------------------------->
+        <!--Start Intro-->
+        <div class="flex-row">
+          <div class="flex-item flex-column"> <!--<div class="flex-item flex-item-stretch-2 flex-column">-->
+            <h2 class="add-top-margin">Implementation</h2>
+            <hr>
+            <p type = "text">
+                We detail our design pipeline below with snippets from our implementation. The full Hand Interfaces Github repository can be
+                 found <a href="https://github.com/handinterfaces/Hand-Interfaces" target="blank">here</a>. 
+            </p>
+            <h3>Hardware</h3>
+            <p class = "text">
+                We implemented Hand Interfaces with an Oculus Quest (first generation) which was connected to a PC (with an AMD Ryzen 7 3700 CPU and a RTX 3070 8G GPU) using a USB 3.0 Type-C cable. 
+                Four built-in cameras on the Quest enables hand tracking in real-time. We used two Oculus Touch Controllers to implement baseline designs in our user studies. 
+            </p>
+            <h3>Design Pipeline</h3>
+            <img class="image" src="img/detection_pipeline.png"> <!--to change the image size style="width:810px;height:500px" -->
+            <p class = "text">
+                <!-- Software Explanation -->
+                Hand Interfaces software was built on Unity platform (2020.3.7f1 ver) and is summarized in the pipeline above. 
+                First, the system initializes at the state of "no hand" before Oculus hand tracking finds any hands in the field of view. 
+                Once hands are found, our software transitions to the "free hand" state. 
+                In this state, Oculus hand tracking returns the positions of all hand key points at ~35 FPS. 
+                With this data stream, our back-end algorithms continuously compute the similarity between the current hand pose and all gesture templates in the current application's gesture set. 
+                The <span class = "text-italic">i</span> here refers to any gesture template in the dataset, which can be either designed by authors of the application in advance, or defined by users during run time. 
+                The <span class = "text-italic">N</span>  denotes the number of gesture templates in the dataset. 
+                The difference score <span class = "text-italic">L<sub>i</sub></span> is calculated by a sum of Euclidean distances per pair of 24 joints 
+                each hand between the current gesture and the <span class = "text-italic">i<sup>th</sup></span> gesture. 
+                Therefore, the more similar the current gesture is to a gesture template, the smaller the difference score is.
+            </p>
+            <p class = "text">
+                Our algorithms keep track of the minimal difference score in the gesture map. 
+                If <span class = "text-italic">minL</span> is higher than a pre-defined threshold, the software stays at the "free hand" state. 
+                Once <span class = "text-italic">minL</span> falls below the threshold, the software transitions to the "object retrieved" state as the algorithms 
+                determine object/gesture <span class = "text-italic">&beta;</span> is retrieved/detected where <span class = "text-italic">&beta; = argminS</span>.
+            </p>
+            <p class = "text">
+                When the current state is "object retrieved", users can interact with the current virtual object. 
+                We introduced a weighted distance score <span class = "text-italic">L'<sub>&beta;</sub></span> using sensitivity matrices <span class = "text-italic">W<sub>&beta;</sub></span>, 
+                each of which is tuned for specific Hand Interfaces designs to make the software less likely to dismiss the object while users are interacting with it. 
+                Specifically, the sensitivity matrices assign lower weights for key points that are supposed to move around during interactions, 
+                and higher weights for static key points. If <span class = "text-italic">L'<sub>&beta;</sub></span> is greater than the threshold, the software dismisses the object and transitions back to the "free hand" state.
+            </p>
+            <button type="button" class="collapsible">Interface Retrieval Pipeline Code</button>
+            <div class="collapse-content">
+              <script src="https://emgithub.com/embed.js?target=https%3A%2F%2Fgithub.com%2Fhandinterfaces%2FHand-Interfaces%2Fblob%2Fmain%2FInterfaceRetrieval.cs&style=darcula&showBorder=on&showLineNumbers=on&showFileMeta=on&showCopy=on"></script>        
+            </div> 
+            <p class = "text">
+                Once objects are retrieved, the software tracks multiple key points on the imitating hand for positioning and orienting the virtual objects. 
+                Specifically, the bottom of the palm determines where the object is. 
+                Other key points decide the orientations of virtual objects and, in some designs, positions of their parts (e.g., the intermediate and proximal phalange bones control where the keys are in the <span class = "text-italic">Kalimba</span> design). 
+                For Hand Interfaces that involve both hands to imitate objects (e.g., <span class = "text-italic">Book</span>) we duplicate the hand tracking and heuristics for the other hand. 
+                For Hand Interfaces that require the other hand to manipulate virtual objects, we detect touch by tracking Euclidean distances between key points of the manipulating fingers and the imitated object parts that are supposed to be moved around. 
+                Below we categorize our detection methods by the interaction designs and describe each with more details:
+            </p>
+            <ul>
+              <li>
+                For designs that rely on discrete hand poses users need to perform (e.g <span class = "text-italic">Scissors</span>). 
+                We use the same software described above. For example, once the index and middle fingers are detected as parallel and touching in the <span class = "text-italic">Scissors</span> hand pose, 
+                the action of cutting is performed. 
+              </li>
+              <li>
+                For designs that involve proximity-based interactions (e.g., <span class = "text-italic">Binoculars</span>), we check distances between the anchoring points on the imitating hands and those on objects in the environment. 
+                For example, the <span class = "text-italic">Binoculars</span> design presents users a long-range view when the <span class = "text-italic">Binoculars</span> are raised up close to users' eyes.
+
+              </li>
+              <li>
+                For designs that users click (e.g., <span class = "text-italic">Globe</span>, <span class = "text-italic">Toggle switch</span>), we continuously monitor the distance between joints of the manipulating hand and joints of the imitating hand. 
+                We detect clicks by looking for patterns of "approach, touch, and no touch". We hard coded the distance threshold to distinguish between touch and no touch to 7 mm. 
+
+              </li>
+              <li> 
+                For designs that feature handle-like interactions (e.g., <span class = "text-italic">Joystick</span> and <span class = "text-italic">Fishing rod</span>), we again monitor distances between touching joints and touched joints, 
+                in addition to which we also detect "approach, grasp, and movement". In other words, we track if the interacting hand performs manipulations on top of tracking clicks. 
+                There are designs that rely on more complicated manipulating hand poses such as <span class = "text-italic">Inflator</span> and <span class = "text-italic">Spray can</span>, 
+                which involve more complicated detection heuristics consisting of simpler ones used in previous designs.
+              </li>
+            </ul>
+            <button type="button" class="collapsible">Scissors Interaction Code</button>
+            <div class="collapse-content">
+              <script src="https://emgithub.com/embed.js?target=https%3A%2F%2Fgithub.com%2Fhandinterfaces%2FHand-Interfaces%2Fblob%2Fmain%2FVirtualScissors.cs&style=darcula&showBorder=on&showLineNumbers=on&showFileMeta=on&showCopy=on"></script>
+            </div> 
+            <button type="button" class="collapsible">Binoculars Interaction Code</button>
+            <div class="collapse-content">
+              <script src="https://emgithub.com/embed.js?target=https%3A%2F%2Fgithub.com%2Fhandinterfaces%2FHand-Interfaces%2Fblob%2Fmain%2FVirtualBinoculars.cs&style=darcula&showBorder=on&showLineNumbers=on&showFileMeta=on&showCopy=on"></script>            
+            </div> 
+            <button type="button" class="collapsible">Joystick Interaction Code</button>
+            <div class="collapse-content">
+              <script src="https://emgithub.com/embed.js?target=https%3A%2F%2Fgithub.com%2Fhandinterfaces%2FHand-Interfaces%2Fblob%2Fmain%2FVirtualJoystick.cs&style=darcula&showBorder=on&showLineNumbers=on&showFileMeta=on&showCopy=on"></script> 
+            </div> 
+            <p class = "text">
+              Additionally, we fine tuned thresholds for the difference score and sensitivity matrices of each Hand Interfaces design for a precise detection. 
+              We implemented a hysteresis buffer of 200 milliseconds of retrieval results to improve robustness. 
+              We also cached latest frames of hand tracking which we used to replace current frames to remove jitters in Oculus hand tracking, which could happen during brief occlusions. 
+            </p>
+          </div>
+            <!-- Always place the embedded scripts outside of the flex column -->
+          </div>
+    </div>
+</div>
+<script>
+  var coll = document.getElementsByClassName("collapsible");
+  var i;
+  
+  for (i = 0; i < coll.length; i++) {
+    coll[i].addEventListener("click", function() {
+      this.classList.toggle("active");
+      var content = this.nextElementSibling;
+      if (content.style.display === "block") {
+        content.style.display = "none";
+      } else {
+        content.style.display = "block";
+      }
+    });
+  }
+  </script>
+</body>

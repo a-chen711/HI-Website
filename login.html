@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name = "robots" content = "noindex">
+    <title>HI Login</title>
+</head>
+<body>
+    <p type = "text">
+        Please click the button below and enter the password to access the Hand Interfaces website.
+    </p>
+<!-- <form name = "passForm" id = "passForm" method = "post">
+    <label for="pswd">Password: </label>
+    <input name = "pswd" type="password" id="pswd" aria-label = "Password">
+    <input name = "submitbutton" type="submit" id="submitbutton" value = "Submit" />
+</form> -->
+<!--Function to check password the already set password is admin-->
+<center>
+    <form>
+        <input type = "button" value = "View Hand Interfaces Website" onclick = "passWord()">
+    </form>
+</center>
+<script>
+    function passWord() {
+        var testV = 1;
+        var pass1 = prompt('Please Enter Your Password',' ');
+        while (testV < 3) {
+            if (!pass1)
+            history.go(-1);
+            if (pass1.toLowerCase() == "hichi2022") {
+                alert('Correct Password!');
+                window.location = "index.html";
+                break;
+            }
+            testV+=1;
+            var pass1 = prompt('Access Denied - Password Incorrect, Please Try Again.','Password');
+        }
+        if (pass1.toLowerCase()!="password" & testV ==3)
+            history.go(-1);
+        return " ";
+    } 
+        // var confirmPassword = "hichi2022";
+        // var password = document.getElementById("pswd").value;
+        // if (password == confirmPassword) {
+        //      window.location="index.html";
+        // }
+        // else{
+        //     alert("Passwords do not match.");
+        // }
+        // document.getElementbyId("passForm").addEventListener('Submit', checkPswd, false);
+    // }
+</script>
+</body>
+</html>
